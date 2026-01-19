@@ -8,7 +8,7 @@ from openai import OpenAI
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 
 class Settings(BaseSettings):
-    OPENAI_API_KEY: str = "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"
+    OPENAI_API_KEY: str
 
 class Patient(SQLModel, table=True):
     id: Union[int, None] = Field(default=None, primary_key=True)
