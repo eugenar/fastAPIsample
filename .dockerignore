@@ -3,6 +3,7 @@ __pycache__/
 *.pyo
 *.sqlite3
 .env
+.venv
 .git
 .gitignore
 .vscode/
