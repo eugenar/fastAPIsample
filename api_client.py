@@ -7,6 +7,19 @@ from config import config
 load_dotenv()
 
 
+def create_api_client():
+    """Factory function to create API client singleton instances based on the configuration."""
+    creators = {
+        "openai": OpenAIClient(),
+    }
+    return creators[config["api_client"]["type"]]
+
+
+api_client = (
+    create_api_client()
+)  # Create a singleton instance of the API client based on the configuration
+
+
 class APIClient(ABC):
     def __init__(self):
         self.parameters = config["api_client"]["parameters"]

@@ -10,8 +10,7 @@ from pydantic_settings import BaseSettings
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api_client import OpenAIClient, client, create_api_client
-import config
+from api_client import api_client
 from database import create_db_and_tables, engine
 from models import Note, Patient
 
@@ -26,14 +25,6 @@ async def get_session():
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
-
-
-def create_api_client():
-    """Factory function to create API client singleton instances based on the configuration."""
-    creators = {
-        "openai": OpenAIClient(),
-    }
-    return creators[config["api_client"]["type"]]
 
 
 @asynccontextmanager
@@ -185,8 +176,7 @@ async def read_notes_summary(patient_id: int, session: SessionDep):
     combined_text = " ".join(note.content for note in notes)
 
     try:
-        client = create_api_client()
-        summary = await client.get_summary(combined_text)
+        summary = await api_client.get_summary(combined_text)
 
         return json.dumps(
             {
