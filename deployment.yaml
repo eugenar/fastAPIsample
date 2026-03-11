@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapisample-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fastapisample
+  template:
+    metadata:
+      labels:
+        app: fastapisample
+    spec:
+      containers:
+      - name: fastapisample-container
+        image: fastapisample:1.0
+        imagePullPolicy: Never
+        env:
+        - name: OPENAI_API_KEY
+          value: ""
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
