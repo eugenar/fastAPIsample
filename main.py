@@ -20,11 +20,13 @@ class Settings(BaseSettings):
 
 
 async def get_session():
+    """Provides a database session for each request.
+    """
     async with AsyncSession(engine) as session:
         yield session
 
 
-SessionDep = Annotated[AsyncSession, Depends(get_session)]
+SessionDep = Annotated[AsyncSession, Depends(get_session)] # Type alias for dependency injection of database sessions
 
 
 @asynccontextmanager
@@ -37,7 +39,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Allows all origins (convenient for development, consider restricting in production)
     allow_methods=["*"],  # Allows all standard methods
     allow_headers=["*"],  # Allows all standard headers
 )
@@ -63,6 +65,7 @@ async def logging_middleware(request: Request, call_next):
 
 @app.post("/patients/")
 async def create_patient(patient: Patient, session: SessionDep) -> Patient:
+    """Creates a new patient record in the database."""
     patient.id = None  # Ensure a new patient is created
     patient.date_of_birth = datetime.strptime(patient.date_of_birth, "%Y-%m-%d").date()
     db_patient = Patient.model_validate(patient)
@@ -78,12 +81,14 @@ async def read_patients(
     offset: int = 0,
     limit: Annotated[int, Query(le=100)] = 100,
 ) -> list[Patient]:
+    """Retrieves a list of patients with pagination support."""
     patients = session.exec(select(Patient).offset(offset).limit(limit)).all()
     return patients
 
 
 @app.get("/patients/{id}")
 async def read_patient(id: int, session: SessionDep) -> Patient:
+    """Retrieves a single patient by ID."""
     patient = session.get(Patient, id)
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
@@ -92,6 +97,7 @@ async def read_patient(id: int, session: SessionDep) -> Patient:
 
 @app.patch("/patients/{id}")
 async def update_patient(id: int, patient: Patient, session: SessionDep):
+    """Updates an existing patient record."""
     patient_db = session.get(Patient, id)
     if not patient_db:
         raise HTTPException(status_code=404, detail="Patient not found")
@@ -107,6 +113,7 @@ async def update_patient(id: int, patient: Patient, session: SessionDep):
 
 @app.delete("/patients/{id}")
 async def delete_patient(id: int, session: SessionDep):
+    """Deletes a patient record from the database."""
     patient = session.get(Patient, id)
     if patient:
         await session.delete(patient)
@@ -116,6 +123,7 @@ async def delete_patient(id: int, session: SessionDep):
 
 @app.post("/notes/{patient_id}")
 async def create_note(patient_id: int, note: Note, session: SessionDep) -> Note:
+    """Creates a new note for a given patient."""
     note.id = None  # Ensure a new note is created
     note.patient_id = patient_id
     note.update_date = datetime.now(timezone.utc)
@@ -133,6 +141,7 @@ async def read_notes(
     offset: int = 0,
     limit: Annotated[int, Query(le=100)] = 100,
 ) -> list[Note]:
+    """Retrieves a list of notes for a given patient with pagination support."""
     notes = session.exec(
         select(Note).where(Note.patient_id == patient_id).offset(offset).limit(limit)
     ).all()
@@ -141,6 +150,7 @@ async def read_notes(
 
 @app.patch("/notes/{id}")
 async def update_note(id: int, note: Note, session: SessionDep):
+    """Updates an existing note."""
     note_db = await session.get(Note, id)
     if not note_db:
         raise HTTPException(status_code=404, detail="Note not found")
@@ -157,6 +167,7 @@ async def update_note(id: int, note: Note, session: SessionDep):
 
 @app.delete("/notes/{id}")
 async def delete_note(id: int, session: SessionDep):
+    """Deletes a note from the database."""
     note = await session.get(Note, id)
     if note:
         await session.delete(note)
@@ -169,10 +180,10 @@ async def delete_note(id: int, session: SessionDep):
     summary="Summarize notes for a given patient using a client API (like OpenAI)",
 )
 async def read_notes_summary(patient_id: int, session: SessionDep):
+    """Retrieves all notes for a given patient, combines their content, and returns a summary using an external API."""
     patient = await session.get(Patient, patient_id)
     notes = await session.exec(select(Note).where(Note.patient_id == patient_id)).all()
 
-    # Combine all note contents into a single string
     combined_text = " ".join(note.content for note in notes)
 
     try:

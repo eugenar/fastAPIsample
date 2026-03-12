@@ -10,5 +10,12 @@
         "temperature": 0.7,
         "maxTokens": 150
     }
+  },
+  "database": {
+    "type": "sqlite",
+    "parameters": {
+        "url": "sqlite+aiosqlite:///database.db"
+    }
   }
+  
 }

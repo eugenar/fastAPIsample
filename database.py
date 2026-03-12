@@ -1,13 +1,18 @@
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel
 
-db_file_name = "database.db"
-db_url = f"sqlite+aiosqlite:///{db_file_name}"
-connect_args = {"check_same_thread": False}
+import config
 
+db_url = config["database"]["parameters"]["url"]
+
+if config["database"]["type"] == "sqlite":
+    connect_args = {
+        "check_same_thread": False
+    }  # SQLite-specific argument to allow connections from multiple threads
+else:
+    connect_args = None
 
 engine = create_async_engine(db_url, connect_args=connect_args)
-db_file_name = "database.db"
 
 
 async def create_db_and_tables():
